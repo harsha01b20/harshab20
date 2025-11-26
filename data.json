@@ -1,0 +1,32 @@
+{
+  "qaList": [],
+  "groups": {
+    "ham": [
+      {
+        "user": {
+          "email": "harshamirage@gmail.com",
+          "username": "Harshvardhan",
+          "isOwner": true
+        },
+        "text": "hi"
+      },
+      {
+        "user": {
+          "email": "harshamirage@gmail.com",
+          "username": "Harshvardhan",
+          "isOwner": true
+        },
+        "text": "hello"
+      },
+      {
+        "user": {
+          "email": "kqvh",
+          "username": "kqvh",
+          "isOwner": false
+        },
+        "text": "hi"
+      }
+    ]
+  },
+  "profiles": {}
+}
