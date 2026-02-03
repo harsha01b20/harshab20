@@ -1,18 +1,25 @@
 {
-  "name": "ai-2",
+  "name": "mars-rover-command-center",
   "version": "1.0.0",
-  "description": "",
-  "main": "script.js",
+  "description": "Mars rover control web application (React + Node.js + ESP relay)",
+  "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js"
   },
-  "keywords": [],
+  "keywords": [
+    "mars",
+    "rover",
+    "robotics",
+    "express",
+    "socket.io",
+    "react"
+  ],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "body-parser": "^2.2.1",
-    "express": "^5.1.0"
+    "express": "^5.1.0",
+    "socket.io": "^4.7.5",
+    "ws": "^8.18.0"
   }
 }
