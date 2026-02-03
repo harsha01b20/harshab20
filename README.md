@@ -29,6 +29,7 @@ Browser (React)
 - **Live video**: ESP32-CAM feed with graceful disconnect handling.
 - **Command chat**: send plain-text commands, view rover responses.
 - **Telemetry dashboard**: connection status, current mode, last command, rover logs.
+- **Device discovery**: scan local network and connect to a specific ESP by IP.
 
 ## Local Setup
 
@@ -82,6 +83,29 @@ Emergency stop.
 
 ### `GET /config`
 Returns frontend config, including camera stream URL.
+
+### `GET /devices`
+Returns devices discovered on the local network using ARP.
+
+Response:
+```json
+{
+  "devices": [
+    { "ip": "192.168.4.10", "mac": "AA:BB:CC:DD:EE:FF", "raw": "...arp output..." }
+  ]
+}
+```
+
+### `POST /connect`
+Sets the active ESP relay target and updates the camera stream URL.
+
+Request:
+```json
+{
+  "espHttpBase": "http://192.168.4.10",
+  "cameraStreamUrl": "http://192.168.4.10:81/stream"
+}
+```
 
 ### WebSocket: `/telemetry`
 Socket.IO path used by browser and ESP.

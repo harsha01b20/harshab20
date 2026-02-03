@@ -194,6 +194,35 @@ h4 {
   border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
+.device-actions {
+  margin: 12px 0 16px;
+}
+
+.device-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.device-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(9, 17, 32, 0.8);
+}
+
+.device-card .control-button {
+  padding: 8px 14px;
+}
+
+.error-text {
+  margin-bottom: 12px;
+  color: var(--danger);
+}
+
 .chat {
   display: flex;
   flex-direction: column;

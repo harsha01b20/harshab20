@@ -1,6 +1,7 @@
 const express = require("express");
 const http = require("http");
 const path = require("path");
+const { exec } = require("child_process");
 const { Server } = require("socket.io");
 const WebSocket = require("ws");
 
@@ -12,10 +13,11 @@ const io = new Server(server, {
 });
 
 const PORT = process.env.PORT || 3000;
-const ESP_HTTP_BASE = process.env.ESP_HTTP_BASE || "http://192.168.4.1";
+let espHttpBase = process.env.ESP_HTTP_BASE || "http://192.168.4.1";
 const ESP_WS_URL = process.env.ESP_WS_URL || "";
-const CAMERA_STREAM_URL =
+const DEFAULT_CAMERA_STREAM_URL =
   process.env.CAMERA_STREAM_URL || "http://192.168.4.1:81/stream";
+let cameraStreamUrl = DEFAULT_CAMERA_STREAM_URL;
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
@@ -23,7 +25,7 @@ app.use(express.static(path.join(__dirname, "public")));
 let lastCommand = "None";
 
 const sendToEsp = async (endpoint, payload) => {
-  const url = `${ESP_HTTP_BASE}${endpoint}`;
+  const url = `${espHttpBase}${endpoint}`;
   const response = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -40,9 +42,69 @@ const sendToEsp = async (endpoint, payload) => {
 
 app.get("/config", (req, res) => {
   res.json({
-    cameraStreamUrl: CAMERA_STREAM_URL,
-    espHttpBase: ESP_HTTP_BASE,
+    cameraStreamUrl,
+    espHttpBase,
   });
+});
+
+const parseArpOutput = (stdout) => {
+  const lines = stdout.split("\n");
+  const devices = [];
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    const ipMatch = trimmed.match(/\\b(?:\\d{1,3}\\.){3}\\d{1,3}\\b/);
+    const macMatch = trimmed.match(/([0-9a-f]{2}[:-]){5}[0-9a-f]{2}/i);
+    if (!ipMatch) continue;
+    devices.push({
+      ip: ipMatch[0],
+      mac: macMatch ? macMatch[0] : null,
+      raw: trimmed,
+    });
+  }
+  return devices;
+};
+
+const listNetworkDevices = () =>
+  new Promise((resolve, reject) => {
+    exec("arp -a", { timeout: 4000 }, (error, stdout, stderr) => {
+      if (error) {
+        reject(new Error(stderr || error.message));
+        return;
+      }
+      resolve(parseArpOutput(stdout));
+    });
+  });
+
+app.get("/devices", async (req, res) => {
+  try {
+    const devices = await listNetworkDevices();
+    res.json({ devices });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post("/connect", (req, res) => {
+  const { espHttpBase: nextBase, cameraStreamUrl: nextCamera } = req.body;
+  if (!nextBase) {
+    return res.status(400).json({ error: "espHttpBase is required" });
+  }
+
+  espHttpBase = nextBase;
+  if (nextCamera) {
+    cameraStreamUrl = nextCamera;
+  } else {
+    cameraStreamUrl = `${nextBase}:81/stream`;
+  }
+
+  io.emit("telemetry", {
+    type: "system",
+    message: `Relay connected to ${espHttpBase}`,
+    timestamp: new Date().toISOString(),
+  });
+
+  return res.json({ success: true, espHttpBase, cameraStreamUrl });
 });
 
 app.post("/command", async (req, res) => {
@@ -119,7 +181,7 @@ app.get("/status", (req, res) => {
   res.json({
     status: "online",
     lastCommand,
-    espHttpBase: ESP_HTTP_BASE,
+    espHttpBase,
   });
 });
 

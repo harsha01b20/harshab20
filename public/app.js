@@ -99,6 +99,10 @@ function App() {
   const [chatInput, setChatInput] = useState("");
   const [cameraUrl, setCameraUrl] = useState("");
   const [cameraOnline, setCameraOnline] = useState(true);
+  const [espBase, setEspBase] = useState("");
+  const [devices, setDevices] = useState([]);
+  const [devicesLoading, setDevicesLoading] = useState(false);
+  const [devicesError, setDevicesError] = useState("");
   const socketRef = useRef(null);
   const movementRef = useRef({ timer: null, current: null });
 
@@ -107,11 +111,59 @@ function App() {
       .then((res) => res.json())
       .then((config) => {
         setCameraUrl(config.cameraStreamUrl);
+        setEspBase(config.espHttpBase || "");
       })
       .catch(() => {
         setCameraUrl("");
       });
   }, []);
+
+  const refreshDevices = async () => {
+    setDevicesLoading(true);
+    setDevicesError("");
+    try {
+      const response = await fetch("/devices");
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "Unable to discover devices");
+      }
+      setDevices(data.devices || []);
+    } catch (error) {
+      setDevicesError(error.message);
+    } finally {
+      setDevicesLoading(false);
+    }
+  };
+
+  const connectDevice = async (deviceIp) => {
+    if (!deviceIp) return;
+    const nextBase = `http://${deviceIp}`;
+    try {
+      const response = await fetch("/connect", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ espHttpBase: nextBase }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to connect");
+      }
+      setEspBase(data.espHttpBase);
+      setCameraUrl(data.cameraStreamUrl);
+      setCameraOnline(true);
+      pushTelemetry({
+        type: "system",
+        message: `Connected to ${data.espHttpBase}`,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      pushTelemetry({
+        type: "system",
+        message: `Connection failed: ${error.message}`,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  };
 
   useEffect(() => {
     const socket = io({ path: "/telemetry" });
@@ -391,6 +443,38 @@ function App() {
             <strong>Telemetry Frames</strong>
             <div>{telemetry.length}</div>
           </div>
+          <div className="status-item">
+            <strong>ESP Target</strong>
+            <div>{espBase || "Not set"}</div>
+          </div>
+        </div>
+      </section>
+
+      <section className="panel">
+        <h3>Device Discovery</h3>
+        <p className="muted">Scan the local network and connect to a rover ESP module.</p>
+        <div className="device-actions">
+          <button className="control-button" onClick={refreshDevices} disabled={devicesLoading}>
+            {devicesLoading ? "Scanning..." : "Scan Network"}
+          </button>
+        </div>
+        {devicesError && <p className="error-text">{devicesError}</p>}
+        <div className="device-list">
+          {devices.length === 0 && !devicesLoading ? (
+            <div className="muted">No devices found yet.</div>
+          ) : (
+            devices.map((device) => (
+              <div key={device.ip} className="device-card">
+                <div>
+                  <strong>{device.ip}</strong>
+                  <div className="muted">{device.mac || "Unknown MAC"}</div>
+                </div>
+                <button className="control-button" onClick={() => connectDevice(device.ip)}>
+                  Connect
+                </button>
+              </div>
+            ))
+          )}
         </div>
       </section>
 
