@@ -177,3 +177,36 @@ Payload example:
 - Pin the ESP IP address (static IP or router DHCP reservation).
 - Consider TLS termination at the relay for secured command channels.
 - Add authentication if the network is shared.
+
+---
+
+## Soil Spectrum Analyzer (Python + Flask)
+
+This repository now also includes a standalone Python web app at `soil_spectrum/` for analyzing two spectrum images:
+
+- **Reference spectrum (`I₀`)**: light source without soil sample
+- **Soil spectrum (`I`)**: light after passing through soil solution
+
+### Features
+- Upload two PNG/JPEG images.
+- Automatically detects the brightest horizontal spectrum band.
+- Extracts intensity profile from a narrow horizontal slice.
+- Maps horizontal pixels to **400–700 nm** wavelengths.
+- Plots:
+  - Reference intensity vs wavelength
+  - Soil intensity vs wavelength
+  - Absorbance vs wavelength using `A = log10(I₀ / I)`
+- Highlights significant absorption wavelength regions.
+- Provides basic interpretation for blue absorption, red absorption, and overall intensity drop.
+
+### Run the app
+
+```bash
+cd soil_spectrum
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+python app.py
+```
+
+Open `http://127.0.0.1:5000` in your browser.
