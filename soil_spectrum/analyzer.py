@@ -1,9 +1,7 @@
 """Core spectrum processing utilities for soil sample analysis."""
 
-from __future__ import annotations
-
 from dataclasses import dataclass
-from typing import Dict, List, Sequence, Tuple
+from typing import Dict, List, Tuple
 
 import cv2
 import numpy as np

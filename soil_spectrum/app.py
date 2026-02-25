@@ -1,10 +1,8 @@
 """Flask web app for soil spectrum composition analysis."""
 
-from __future__ import annotations
-
 import base64
 import io
-from typing import Dict
+from typing import Dict, Optional
 
 import matplotlib
 
@@ -67,7 +65,7 @@ def plot_absorbance(wavelengths, absorbance, regions) -> str:
 @app.route("/", methods=["GET", "POST"])
 def index():
     error = None
-    results: Dict[str, object] | None = None
+    results: Optional[Dict[str, object]] = None
 
     if request.method == "POST":
         ref_file = request.files.get("reference_image")
