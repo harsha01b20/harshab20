@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Soil Spectrum Analyzer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+  </head>
+  <body>
+    <main class="container">
+      <h1>Soil Spectrum Analyzer</h1>
+      <p class="subtitle">
+        Upload a reference spectrum and a soil spectrum to estimate absorbance and basic composition clues.
+      </p>
+
+      <form method="post" enctype="multipart/form-data" class="upload-form">
+        <label>
+          Reference spectrum image (I₀)
+          <input type="file" name="reference_image" accept=".png,.jpg,.jpeg" required />
+        </label>
+
+        <label>
+          Soil spectrum image (I)
+          <input type="file" name="soil_image" accept=".png,.jpg,.jpeg" required />
+        </label>
+
+        <button type="submit">Analyze</button>
+      </form>
+
+      {% if error %}
+      <div class="error">{{ error }}</div>
+      {% endif %}
+
+      {% if results %}
+      <section class="results">
+        <div class="plot-card">
+          <h2>Reference Intensity vs Wavelength</h2>
+          <img src="data:image/png;base64,{{ results.reference_plot }}" alt="Reference spectrum plot" />
+        </div>
+
+        <div class="plot-card">
+          <h2>Soil Intensity vs Wavelength</h2>
+          <img src="data:image/png;base64,{{ results.soil_plot }}" alt="Soil spectrum plot" />
+        </div>
+
+        <div class="plot-card">
+          <h2>Absorbance vs Wavelength</h2>
+          <img src="data:image/png;base64,{{ results.absorbance_plot }}" alt="Absorbance plot" />
+        </div>
+
+        <div class="insights">
+          <h2>Interpretation</h2>
+          <ul>
+            <li>{{ results.interpretation.blue }}</li>
+            <li>{{ results.interpretation.red }}</li>
+            <li>{{ results.interpretation.overall }}</li>
+          </ul>
+
+          <h3>Detected Brightest Band Rows</h3>
+          <p>Reference band: rows {{ results.reference_band[0] }} to {{ results.reference_band[1] }}</p>
+          <p>Soil band: rows {{ results.sample_band[0] }} to {{ results.sample_band[1] }}</p>
+
+          <h3>Significant absorption regions</h3>
+          {% if results.regions %}
+          <ul>
+            {% for start, end in results.regions %}
+            <li>{{ '%.1f'|format(start) }} nm to {{ '%.1f'|format(end) }} nm</li>
+            {% endfor %}
+          </ul>
+          {% else %}
+          <p>No strong peaks above the dynamic significance threshold.</p>
+          {% endif %}
+        </div>
+      </section>
+      {% endif %}
+    </main>
+  </body>
+</html>
